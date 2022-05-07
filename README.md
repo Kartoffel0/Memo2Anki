@@ -1,5 +1,8 @@
 # Memo2Anki
 CLI Python script to mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pdf)
+<p align="center">
+  <img src="Memo2Anki-card.JPG" height="auto" width="auto">
+</p>
 
 ### To use this script please make your sure Kindle language is set to either Brazilian Portuguese, English or Japanese
 
