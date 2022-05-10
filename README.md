@@ -20,7 +20,7 @@ CLI Python script to mine from pdfs created with [Mokuro2Pdf](https://github.com
 # Usage
 ### Converting Mokuro's html overlay to pdf
 - DO NOT remove "MKR2PDF" from the generated pdf's filename, without that this script will not work
-- After the conversion is finished a `<title you gave to the pdf> - MKR2PDF.json` file is going to be generated, copy that and the folder with all the manga pages to the same directory as this script
+- After the conversion is finished a `<title you gave to the pdf> - MKR2PDF.json` json file is going to be generated, copy that and the folder with all the manga pages to the same directory as this script
 
 ### While reading:
 - Select the word you want to mine
