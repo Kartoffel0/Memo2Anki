@@ -254,12 +254,12 @@ with open("My Clippings.txt", "r", encoding="utf-8") as clipp:
     for line in clipp:
         if line.strip() == "==========":
             if re.search("MKR2PDF", tmp[0]) is not None:
-                if tmp[0].strip() not in books:
-                    entries[tmp[0].strip()] = []
-                    entriesPage[tmp[0].strip()] = {}
-                    addedEntries[tmp[0].strip()] = []
-                    books.append(tmp[0].strip())
                 if re.search("メモ|note|nota", tmp[1], flags=re.IGNORECASE) is not None:
+                    if tmp[0].strip() not in books:
+                        entries[tmp[0].strip()] = []
+                        entriesPage[tmp[0].strip()] = {}
+                        addedEntries[tmp[0].strip()] = []
+                        books.append(tmp[0].strip())
                     if tmp[3].strip() not in history:
                         entries[tmp[0].strip()].append(tmp[3].strip())
                         line1 = []
@@ -283,7 +283,7 @@ if numCards == 0:
     numCards = 99999
 for t in range(len(entries[books[bookName]])):
     try:
-        if cntCards < numCards:
+        if cntCards <= numCards:
             subFreq = True
             if len(freqlists) > 0:
                 subFreq = False
