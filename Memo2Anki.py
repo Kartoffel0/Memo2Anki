@@ -228,22 +228,29 @@ def deconjug(term, mode=0):
     else:
         return tkTerm[0].normalized_form()
         
-def lookup(term, dictN=0):
-    try:
-        definition = dicts[dictN][term]
-        return [term, definition[1], definition[5][0], dictN]
-    except KeyError:
+def lookup(term, exact=0, dictN=0):
+    if exact == 1:
         try:
-            termTK = deconjug(term)
-            definition = dicts[dictN][termTK]
-            return [termTK, definition[1], definition[5][0], dictN]
+            definition = dicts[dictN][term]
+            return [term, definition[1], definition[5][0], dictN]
+        except KeyError:
+            return None
+    else:
+        try:
+            definition = dicts[dictN][term]
+            return [term, definition[1], definition[5][0], dictN]
         except KeyError:
             try:
-                termTK = deconjug(term, 1)
+                termTK = deconjug(term)
                 definition = dicts[dictN][termTK]
                 return [termTK, definition[1], definition[5][0], dictN]
             except KeyError:
-                return None
+                try:
+                    termTK = deconjug(term, 1)
+                    definition = dicts[dictN][termTK]
+                    return [termTK, definition[1], definition[5][0], dictN]
+                except KeyError:
+                    return None
 
 entriesPage = {}
 entries = {}
@@ -298,15 +305,26 @@ for t in range(len(entries[books[bookName]])):
                 dictEntries = []
                 for u in range(config["dictNum"]):
                     if len(dictEntries) == 0:
-                        entry = lookup(entries[books[bookName]][t], u)
+                        entry = lookup(entries[books[bookName]][t], 1, u)
                         if entry != None:
                             dictEntries.append(entry)
                     else:
-                        entry = lookup(dictEntries[0][0], u)
+                        entry = lookup(dictEntries[0][0], 1, u)
                         if entry != None:
                             if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1]:
-                                dictEntries.append(entry)   
-                if len(dictEntries) > 0:
+                                dictEntries.append(entry)
+                if len(dictEntries) == 0:
+                    for u in range(config["dictNum"]):
+                        if len(dictEntries) == 0:
+                            entry = lookup(entries[books[bookName]][t], 0, u)
+                            if entry != None:
+                                dictEntries.append(entry)
+                        else:
+                            entry = lookup(dictEntries[0][0], 0, u)
+                            if entry != None:
+                                if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1]:
+                                    dictEntries.append(entry)
+                else:
                     furigana = ''
                     definition = '<div style="text-align: left;"><ol>'
                     for o in dictEntries:
