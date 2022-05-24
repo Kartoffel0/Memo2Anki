@@ -38,27 +38,6 @@ freqlists = json.load(freqListsFile)
 configFile = open("app_files/config.json", encoding="utf-8")
 config = json.load(configFile)
 
-if "bookName" not in config and config["first_run"] == 0:
-    bookOpt = int(input("\n Would you like to add the name of the book you're mining from to your cards?\n Enter 1 to confirm or 0 to decline:\n "))
-    if bookOpt == 0:
-        config["bookName"] = 0
-        with open("app_files/config.json", "w", encoding="utf-8") as file:
-            json.dump(config, file, ensure_ascii=False)
-        print("\n Done!\n")
-    else:
-        bookField = input('\n Please inform the field name!!!case sensitive!!! where you want the "Book Name" to be: ')
-        config["bookName"] = 1
-        config["bookField"] = bookField
-        with open("app_files/config.json", "w", encoding="utf-8") as file:
-            json.dump(config, file, ensure_ascii=False)
-        print("\n Done!")
-
-if "scope" not in config and config["first_run"] == 0:
-    defScope = int(input("\n Please inform where do you want the script to check for duplicates,\n enter 0 to check for them only on the deck you specified or 1 to check for them on your whole collection:\n "))
-    config["scope"] = "deck" if defScope == 0 else "collection"
-    with open("app_files/config.json", "w", encoding="utf-8") as file:
-        json.dump(config, file, ensure_ascii=False)
-    
 dict_name = config["dict_Names"]
 freqMax = config["freqMax"]
 
@@ -280,7 +259,7 @@ with open("My Clippings.txt", "r", encoding="utf-8") as clipp:
         else:
             tmp.append(line)
 
-print("\n Words:\t\tTotal number of words from that book on Kindle's My Clippings\n Avaiable:\tTotal amount of those words not yet processed by this script\n")
+print("\n Words:\t\tTotal number of words from that book on Kindle's My Clippings.txt\n Avaiable:\tTotal amount of those words not yet processed by this script\n")
 print("\n | ID\t| WORDS\t\t| AVAIABLE\t| BOOK NAME")
 for i in range(len(books)):
     print(" |", i," \t|",len(entries[books[i]]) + len(addedEntries[books[i]])," \t\t|",len(entries[books[i]]), "    \t|", books[i].replace(" - MKR2PDF", ""))
@@ -290,7 +269,7 @@ if numCards == 0:
     numCards = 99999
 for t in range(len(entries[books[bookName]])):
     try:
-        if cntCards <= numCards:
+        if cntCards < numCards:
             subFreq = True
             if len(freqlists) > 0:
                 subFreq = False
