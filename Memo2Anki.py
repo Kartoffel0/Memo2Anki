@@ -290,9 +290,9 @@ for t in range(len(entries[books[bookName]])):
                     else:
                         entry = lookup(dictEntries[0][0], 1, u)
                         if entry != None:
-                            if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1]:
+                            if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1] or entry[1] == dictEntries[0][0]:
                                 dictEntries.append(entry)
-                if len(dictEntries) == 0:
+                if len(dictEntries) == 0 or len(dictEntries) < config["dictNum"]:
                     for u in range(config["dictNum"]):
                         if len(dictEntries) == 0:
                             entry = lookup(entries[books[bookName]][t], 0, u)
@@ -301,8 +301,9 @@ for t in range(len(entries[books[bookName]])):
                         else:
                             entry = lookup(dictEntries[0][0], 0, u)
                             if entry != None:
-                                if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1]:
-                                    dictEntries.append(entry)
+                                if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1] or entry[1] == dictEntries[0][0]:
+                                    if entry not in dictEntries:
+                                        dictEntries.append(entry)
                 else:
                     furigana = ''
                     definition = '<div style="text-align: left;"><ol>'
