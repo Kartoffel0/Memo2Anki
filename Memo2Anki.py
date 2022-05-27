@@ -304,7 +304,7 @@ for t in range(len(entries[books[bookName]])):
                                 if entry[1] == dictEntries[0][1] or entry[0] == dictEntries[0][1] or entry[1] == dictEntries[0][0]:
                                     if entry not in dictEntries:
                                         dictEntries.append(entry)
-                else:
+                if len(dictEntries) > 0:
                     furigana = ''
                     definition = '<div style="text-align: left;"><ol>'
                     for o in dictEntries:
