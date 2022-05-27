@@ -208,28 +208,36 @@ def deconjug(term, mode=0):
         return tkTerm[0].normalized_form()
         
 def lookup(term, exact=0, dictN=0):
-    if exact == 1:
-        try:
-            definition = dicts[dictN][term]
-            return [term, definition[1], definition[5][0], dictN]
-        except KeyError:
-            return None
+    if dictN == -1:
+        hasEntry = []
+        for d in range(config["dictNum"]):
+            tmpLp = lookup(term, 0, d)
+            if lookup is not None:
+                hasEntry.append(tmpLp)
+        return len(hasEntry) > 0
     else:
-        try:
-            definition = dicts[dictN][term]
-            return [term, definition[1], definition[5][0], dictN]
-        except KeyError:
+        if exact == 1:
             try:
-                termTK = deconjug(term)
-                definition = dicts[dictN][termTK]
-                return [termTK, definition[1], definition[5][0], dictN]
+                definition = dicts[dictN][term]
+                return [term, definition[1], definition[5][0], dictN]
+            except KeyError:
+                return None
+        else:
+            try:
+                definition = dicts[dictN][term]
+                return [term, definition[1], definition[5][0], dictN]
             except KeyError:
                 try:
-                    termTK = deconjug(term, 1)
+                    termTK = deconjug(term)
                     definition = dicts[dictN][termTK]
                     return [termTK, definition[1], definition[5][0], dictN]
                 except KeyError:
-                    return None
+                    try:
+                        termTK = deconjug(term, 1)
+                        definition = dicts[dictN][termTK]
+                        return [termTK, definition[1], definition[5][0], dictN]
+                    except KeyError:
+                        return None
 
 entriesPage = {}
 entries = {}
@@ -246,7 +254,7 @@ with open("My Clippings.txt", "r", encoding="utf-8") as clipp:
                         entriesPage[tmp[0].strip()] = {}
                         addedEntries[tmp[0].strip()] = []
                         books.append(tmp[0].strip())
-                    if tmp[3].strip() not in history:
+                    if tmp[3].strip() not in history and lookup(tmp[3].strip(), -1):
                         entries[tmp[0].strip()].append(tmp[3].strip())
                         line1 = []
                         line1.extend(tmp[1].split("|"))
