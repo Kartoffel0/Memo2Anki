@@ -4,7 +4,7 @@ Mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pd
   <img src="Memo2Anki-card.JPG">
 </p>
 
-### To use this script please make your sure Kindle language is set to either Brazilian Portuguese, English or Japanese
+### To use this Memo2ANki please make your sure your Kindle's language is set to either Brazilian Portuguese, English or Japanese
 
 # Features
 - Semi-automatic ```Word, Reading, Definition, Manga Page, Audio, BookName``` Anki card creation with definitions from how many Yomichan dictionaries you want and audio from JapanesePod
