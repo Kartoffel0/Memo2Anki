@@ -1,5 +1,5 @@
 # Memo2Anki
-CLI Python script to mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pdf)
+Mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pdf)
 <p align="center">
   <img src="Memo2Anki-card.JPG">
 </p>
@@ -18,9 +18,9 @@ CLI Python script to mine from pdfs created with [Mokuro2Pdf](https://github.com
 - Clone this repository
 
 # Usage
-### Converting Mokuro's html overlay to pdf
+### [Convert Mokuro's html oerlay to pdf](https://github.com/Kartoffel0/Mokuro2Pdf)
 - DO NOT remove "MKR2PDF" from the generated pdf's filename, without that this script will not work
-- After the conversion is finished a `<title you gave to the pdf> - MKR2PDF.json` json file is going to be generated, copy that and the folder with all the manga pages to the same directory as this script
+- After the conversion is finished a `Memo2Anki_Jsons/<title you gave to the pdf> - MKR2PDF.json` json file is going to be generated, copy that and the images folder to Memo2Anki's folder
 
 ### While reading:
 - Select the word you want to mine
@@ -30,7 +30,7 @@ CLI Python script to mine from pdfs created with [Mokuro2Pdf](https://github.com
 
 ### Running the script:
 #### This script utilizes AnkiConnect, make sure you have Anki running on the background before you run the script
-- Plug your kindle into your computer and grab the `My Clippings.txt` file from its storage by going to ```documents/```, or by searching for "My Clippings.txt", and paste it in the same folder as the Memo2Anki.py file
+- Copy your `My Clippings.txt` file from your Kindle's storage by going to ```documents/```, or by searching for "My Clippings.txt", to Memo2Anki's folder
 - Run the script
 - Choose the book you want to mine from when prompted to
 - Choose how many cards you want the script to generate when prompted to
