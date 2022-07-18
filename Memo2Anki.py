@@ -5,8 +5,8 @@ import json
 from sudachipy import dictionary
 import urllib.request
 import re
-from collections import deque
 import base64
+import pypdfium2 as pdfium
 
 """
 If you run into any problems while trying to use this script 
@@ -17,86 +17,65 @@ no guarantees tho
 TKZR = dictionary.Dictionary(dict_type="full").create()
 cntCards = 0
 
-dictsFile = open("app_files/dicts.json", encoding="utf-8")
-dicts = json.load(dictsFile)
+def loadJson(filename, default):
+    try:
+        return json.load(open(f"{filename}.json", encoding="utf-8"))
+    except:
+        return default
 
-jpodFile = open("app_files/jpodFiles.json", encoding="utf-8")
-jpod = json.load(jpodFile)
+try:
+    jpod = json.load(open("app_files/jpodFiles.json", encoding="utf-8"))
+except:
+    print(" Japanesepod's avaiable audio database not found!\n Please download it from Kindle2Anki's github repository!")
+    jpod = []
 
-freqMainFile = open("app_files/mainFreq.json", encoding="utf-8")
-freqMain = json.load(freqMainFile)
+try:
+    freqMain = json.load(open("app_files/mainFreq.json", encoding="utf-8"))
+except:
+    freqMain = {}
 
-historyFile = open("app_files/added.json", encoding="utf-8")
-history = json.load(historyFile)
-
-historyFile3 = open("app_files/errorHistory.json", encoding="utf-8")
-historyError = json.load(historyFile3)
-
-freqListsFile = open("app_files/freqlists.json", encoding="utf-8")
-freqlists = json.load(freqListsFile)
-
-configFile = open("app_files/config.json", encoding="utf-8")
-config = json.load(configFile)
-
-dict_name = config["dict_Names"]
-freqMax = config["freqMax"]
+config = loadJson("app_files/config", {"first_run":1})
+dicts = loadJson("app_files/dicts", [])
+freqlists = loadJson("app_files/freqLists", [])
+history = loadJson("app_files/added", [])
+historyError = loadJson("app_files/errorHistory", [])
 
 def add_dict(dictN):
-    global dict_name
-    global dicts
-    global config
-    cnt = 0
+    dict = {}
     fileNames = os.listdir("app_files/{}".format(dictN))
-    for name in fileNames:
-        if name == "index.json":
-            dict1_IdFile = open("app_files/{}/index.json".format(dictN), encoding="utf-8")
-            dict1_Index = json.load(dict1_IdFile)
-            dict_name.append(dict1_Index["title"])
-            config["dict_Names"].append(dict1_Index["title"])
-        else:
-            cnt += 1
-    for i in range(1, cnt+1):
-        dictFile = open("app_files/{}/{}".format(dictN, fileNames[i]), encoding="utf-8")
-        data = json.load(dictFile)
+    dictName = json.load(open("app_files/{}/index.json".format(dictN), encoding="utf-8"))["title"]
+    fileNames.remove("index.json")
+    for i in fileNames:
+        data = json.load(open("app_files/{}/{}".format(dictN, i), encoding="utf-8"))
         for j in data:
-            if (j[0] in dicts[dictN]):
+            if (j[0] in dict):
                 try:
                     if j[1] == freqMain[j[0]]:
-                        dicts[dictN][j[0]] = j
+                        dict[j[0]] = j
                 except KeyError:
                     continue
             else:
-                dicts[dictN][j[0]] = j
-
-def appendDict():
-    global freqlists
-    freqlists.append({})
-
-def appendDict2():
-    global dicts
-    dicts.append({})  
+                dict[j[0]] = j
+    return [dictName, dict]
 
 def add_freqList(freqN):
-    global freqlists
-    cnt = 0
+    freqlist = {}
     fileNames = os.listdir("app_files/freq/{}".format(freqN))
-    for name in fileNames:
-        if name == "index.json":
-            continue
-        else:
-            cnt += 1
-    for i in range(1, cnt+1):
-        freqFile = open("app_files/freq/{}/{}".format(freqN, fileNames[i]), encoding="utf-8")
-        data = json.load(freqFile)
+    fileNames.remove("index.json")
+    for i in fileNames:
+        data = json.load(open("app_files/freq/{}/{}".format(freqN, i), encoding="utf-8"))
         for j in data:
             if type(j[2]) is dict:
                 if "frequency" in j[2]:
-                    freqlists[freqN][j[0]] = j[2]["frequency"]
+                    freqlist[j[0]] = j[2]["frequency"]
+            elif re.search("★*\(\d+\)", j[2]) is not None:
+                freqlist[j[0]] = j[2]
             else:
                 if re.search("/", str(j[2])):
-                    freqlists[freqN][j[0]] = int(j[2].split("/")[0])
+                    freqlist[j[0]] = int(j[2].split("/")[0])
                 else:
-                    freqlists[freqN][j[0]] = j[2]
+                    freqlist[j[0]] = j[2]
+    return freqlist
 
 print(" Memo2Anki - https://github.com/Kartoffel0/Memo2Anki")
 if config["first_run"] == 1:
@@ -107,15 +86,15 @@ if config["first_run"] == 1:
     for i in range(dict_Num):
         with zipfile.ZipFile("{}".format(input("\n Enter the filename for your {}° dictionary:\n ".format(i+1))), 'r') as zip_ref:
             zip_ref.extractall("app_files/{}".format(i))
-        appendDict2()
-        add_dict(i)
+        dict = add_dict(i)
+        config("dict_Names").append(dict[0])
+        dicts.append(dict[1])
     freqNum = int(input("\n This script don't support multi frequency per word frequency lists,\n make sure the frequency list you'll add has only one frequency per word\n\n Please inform how many frequency lists you want to add,\n enter 0 if you don't want to add one:\n "))
     if freqNum > 0:
         for j in range(freqNum):
             with zipfile.ZipFile("{}".format(input("\n Enter the filename for your {}° frequency list:\n ".format(j+1))), 'r') as zip_ref:
                 zip_ref.extractall("app_files/freq/{}".format(j))
-            appendDict()
-            add_freqList(j)
+            freqlists.append(add_freqList(j))
         freqMax = int(input("\n Please inform the maximum frequency limit\n any words with a frequency rank superior to\n that will not be processed:\n "))
         config["freqMax"] = freqMax
     config["first_run"] = 0
@@ -157,6 +136,9 @@ if config["first_run"] == 1:
         json.dump(freqlists, file, ensure_ascii=False)
     print("\n Done!\n")
 
+dict_name = config["dict_Names"]
+freqMax = config["freqMax"]
+
 def newCard(deckInfo, term, reading, defs, pageNumber, page, extension, book=0):
     global jpod
     tmpJpod = (reading+"_"+term)
@@ -176,7 +158,7 @@ def invoke(params, term="error"):
     global cntCards
     global historyError
     global config
-    time.sleep(3)
+    time.sleep(1)
     try:
         if config["scope"] == "deck":
             requestJson = json.dumps(params).encode('utf-8')
@@ -243,29 +225,35 @@ entriesPage = {}
 entries = {}
 addedEntries = {}
 books = []
-with open("My Clippings.txt", "r", encoding="utf-8") as clipp:
-    tmp = []
-    for line in clipp:
-        if line.strip() == "==========":
-            if re.search("MKR2PDF", tmp[0]) is not None:
-                if re.search("メモ|note|nota", tmp[1], flags=re.IGNORECASE) is not None:
-                    if tmp[0].strip() not in books:
-                        entries[tmp[0].strip()] = []
-                        entriesPage[tmp[0].strip()] = {}
-                        addedEntries[tmp[0].strip()] = []
-                        books.append(tmp[0].strip())
-                    if tmp[3].strip() not in history and lookup(tmp[3].strip(), -1):
-                        entries[tmp[0].strip()].append(tmp[3].strip())
-                        line1 = []
-                        line1.extend(tmp[1].split("|"))
-                        pageNumber = re.search("\d+", line1[0])
-                        pageNumber = pageNumber.group()
-                        entriesPage[tmp[0].strip()][tmp[3].strip()] = pageNumber
-                    else:
-                        addedEntries[tmp[0].strip()].append(tmp[3].strip())
+while True:
+    try:
+        with open("My Clippings.txt", "r", encoding="utf-8") as clipp:
             tmp = []
-        else:
-            tmp.append(line)
+            for line in clipp:
+                if line.strip() == "==========":
+                    if re.search("MKR2PDF", tmp[0]) is not None:
+                        if re.search("メモ|note|nota", tmp[1], flags=re.IGNORECASE) is not None:
+                            if tmp[0].strip() not in books:
+                                entries[tmp[0].strip()] = []
+                                entriesPage[tmp[0].strip()] = {}
+                                addedEntries[tmp[0].strip()] = []
+                                books.append(tmp[0].strip())
+                            if tmp[3].strip() not in history and lookup(tmp[3].strip(), -1):
+                                entries[tmp[0].strip()].append(tmp[3].strip())
+                                line1 = []
+                                line1.extend(tmp[1].split("|"))
+                                pageNumber = re.search("\d+", line1[0])
+                                pageNumber = pageNumber.group()
+                                entriesPage[tmp[0].strip()][tmp[3].strip()] = pageNumber
+                            else:
+                                addedEntries[tmp[0].strip()].append(tmp[3].strip())
+                    tmp = []
+                else:
+                    tmp.append(line)
+            break
+    except:
+        print(" Fail loading My Clippings.txt\n File not found, please copy it from documents/My Clippings.txt to Memo2Anki's root directory!")
+        tmp = input(" Enter any key to try again:\n")
 
 print("\n Words:\t\tTotal number of words from that book on Kindle's My Clippings.txt\n Avaiable:\tTotal amount of those words not yet processed by this script\n")
 print("\n | ID\t| WORDS\t\t| AVAIABLE\t| BOOK NAME")
@@ -275,6 +263,14 @@ bookName = int(input("\n Enter the ID of the book to mine from:\n "))
 numCards = int(input("\n Enter the number of cards to be added:\n You can also enter 0 to add all avaiable:\n "))
 if numCards == 0:
     numCards = 99999
+while True:
+    try:
+        pdf = pdfium.PdfDocument(f"{books[bookName]}.pdf")
+        pdf.close()
+        break
+    except:
+        print(f" Fail loading {books[bookName]}.pdf!\n File not found, please copy it to Memo2Anki's root directory!")
+        tmp = input(" Enter any key to try again:\n")
 for t in range(len(entries[books[bookName]])):
     try:
         if cntCards < numCards:
@@ -320,22 +316,26 @@ for t in range(len(entries[books[bookName]])):
                             furigana = o[1]
                         definition += '<li><i>({})</i>{}</li>'.format(dict_name[o[3]], o[2])
                     definition += '</ol></div>'
-                    with open(f'{books[bookName]}.json', "r", encoding="utf-8") as pageJson:
-                        pageDB = json.load(pageJson)
-                        with open(f'{pageDB[entriesPage[books[bookName]][entries[books[bookName]][t]]]}', 'rb') as page:
-                            if config["bookName"] == 0:
-                                card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, pageDB[entriesPage[books[bookName]][entries[books[bookName]][t]]][-3:])
-                                invoke(card, dictEntries[0][0])
-                                history.append(entries[books[bookName]][t])
-                            else:
-                                card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["bookField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, pageDB[entriesPage[books[bookName]][entries[books[bookName]][t]]][-3:], books[bookName].replace(" - MKR2PDF", ""))
-                                invoke(card, dictEntries[0][0])
-                                history.append(entries[books[bookName]][t])
+                    pdf = pdfium.PdfDocument(f"{books[bookName]}.pdf")
+                    pdfPage = pdf.get_page((int(entriesPage[books[bookName]][entries[books[bookName]][t]]) - 1))
+                    pil_image = pdfPage.render_topil()
+                    pil_image.save("tmp.jpg")
+                    with open('tmp.jpg', 'rb') as page:
+                        if config["bookName"] == 0:
+                            card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, "jpg")
+                            invoke(card, dictEntries[0][0])
+                            history.append(entries[books[bookName]][t])
+                        else:
+                            card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["bookField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, "jpg", books[bookName].replace(" - MKR2PDF", ""))
+                            invoke(card, dictEntries[0][0])
+                            history.append(entries[books[bookName]][t])
+                    pdfPage.close()
+                    pdf.close()
             else:
                 print(" Fail!    Frequency rank > {} or no frequency avaiable: {}".format(freqMax, entries[books[bookName]][t]))
     except:
         historyError.append(entries[books[bookName]][t])
-        print(" Fail!    No entry avaiable for: {}".format(entries[books[bookName]][t]))
+        print(" Fail!")
 
 with open("app_files/added.json", "w", encoding="utf-8") as file:
     json.dump(history, file, ensure_ascii=False)
