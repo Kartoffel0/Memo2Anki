@@ -13,14 +13,16 @@ Mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pd
 
 # Installation
 - Install SudachiPy
-```pip install sudachipy sudachidict_full```
+`pip install sudachipy sudachidict_full`
+- Install Pypdfium2
+`pip install --no-build-isolation -U pypdfium2`
 - Install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) if you don't have it already installed
 - Clone this repository
 
 # Usage
 ### [Convert Mokuro's html overlay to PDF](https://github.com/Kartoffel0/Mokuro2Pdf)
 - DO NOT remove "MKR2PDF" from the generated pdf's filename, without that this script will not work
-- After the conversion is finished a `Memo2Anki_Jsons/<title you gave to the pdf> - MKR2PDF.json` json file is going to be generated, copy that and the images folder to Memo2Anki's folder
+- Copy the generated pdf file to Memo2Anki's root directory
 
 ### While reading:
 - Select the word you want to mine
