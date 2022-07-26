@@ -95,8 +95,13 @@ if config["first_run"] == 1:
             with zipfile.ZipFile("{}".format(input("\n Enter the filename for your {}° frequency list:\n ".format(j+1))), 'r') as zip_ref:
                 zip_ref.extractall("app_files/freq/{}".format(j))
             freqlists.append(add_freqList(j))
-        freqMax = int(input("\n Please inform the maximum frequency limit\n any words with a frequency rank superior to\n that will not be processed:\n "))
+        freqMax = int(input("\n Please inform the maximum frequency limit\n any words with a frequency rank superior to that will not be processed, enter 0 to not set a limit:\n "))
         config["freqMax"] = freqMax
+        freqField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Word Frequency' to be, or enter 0 if you don't want it on your cards:\n")
+        config["freqField"] = freqField
+    if freqNum == 0:
+        config["freqMax"] = 0
+        config["freqField"] = 0
     config["first_run"] = 0
     deck = input("\n Please inform the name of the deck(!!!case sensitive!!!) where you want the cards to be added:\n ")
     config["deckName"] = deck
@@ -139,20 +144,19 @@ if config["first_run"] == 1:
 dict_name = config["dict_Names"]
 freqMax = config["freqMax"]
 
-def newCard(deckInfo, term, reading, defs, pageNumber, page, extension, book=0):
+def newCard(config, args):
     global jpod
-    tmpJpod = (reading+"_"+term)
+    tmpJpod = (args["reading"]+"_"+args["term"])
+    card = {"action": "addNote", "version": 6, "params": {"note":{"deckName": config["deckName"], "modelName": config["cardType"], "fields": {config["termField"]: args["term"], config["readField"]: args["reading"], config["dictField"]: args["definition"].replace("\n", "<br>")}, "options": {"allowDuplicate": False, "duplicateScope": "deck", "duplicateScopeOptions": {"deckName": config["deckName"], "checkChildren": True, "checkAllModels": True}}, "tags": ["Kindle2Anki", "Manga"], "picture": [{"filename": "{} - {}.{}".format(args["bookName"], args["pageNumber"], "jpg"), "data": base64.b64encode(args["page"].read()).decode('utf-8'), "fields": [config["picField"]]}]}}}
     if tmpJpod in jpod:
-        if book == 0:
-            return {"action": "addNote", "version": 6, "params": {"note":{"deckName": deckInfo[0], "modelName": deckInfo[1], "fields": {deckInfo[2]: term, deckInfo[3]: reading, deckInfo[4]: defs.replace("\n", "<br>")}, "options": {"allowDuplicate": False, "duplicateScope": "deck", "duplicateScopeOptions": {"deckName": deckInfo[0], "checkChildren": True, "checkAllModels": True}}, "tags": ["Kindle2Anki", "Manga"], "audio": [{"filename": "{} - {}.mp3".format(reading, term),"url": "https://assets.languagepod101.com/dictionary/japanese/audiomp3.php?kanji={}&kana={}".format(term, reading), "fields": [deckInfo[6]]}], "picture": [{"filename": "{} - {}.{}".format(book, pageNumber, extension), "data": base64.b64encode(page.read()).decode('utf-8'), "fields": [deckInfo[7]]}]}}}
-        else:
-            return {"action": "addNote", "version": 6, "params": {"note":{"deckName": deckInfo[0], "modelName": deckInfo[1], "fields": {deckInfo[2]: term, deckInfo[3]: reading, deckInfo[4]: defs.replace("\n", "<br>"), deckInfo[7]: book}, "options": {"allowDuplicate": False, "duplicateScope": "deck", "duplicateScopeOptions": {"deckName": deckInfo[0], "checkChildren": True, "checkAllModels": True}}, "tags": ["Kindle2Anki", "Manga"], "audio": [{"filename": "{} - {}.mp3".format(reading, term),"url": "https://assets.languagepod101.com/dictionary/japanese/audiomp3.php?kanji={}&kana={}".format(term, reading), "fields": [deckInfo[6]]}], "picture": [{"filename": "{} - {}.{}".format(book, pageNumber, extension), "data": base64.b64encode(page.read()).decode('utf-8'), "fields": [deckInfo[8]]}]}}}
+        card["params"]["note"]["audio"] = [{"filename": "{} - {}.mp3".format(args["reading"], args["term"]),"url": "https://assets.languagepod101.com/dictionary/japanese/audiomp3.php?kanji={}&kana={}".format(args["term"], args["reading"]), "fields": [config["audioField"]]}]
     else:
-        print(" Warning! No audio avaiable: ", term)
-        if book == 0:
-            return {"action": "addNote", "version": 6, "params": {"note":{"deckName": deckInfo[0], "modelName": deckInfo[1], "fields": {deckInfo[2]: term, deckInfo[3]: reading, deckInfo[4]: defs.replace("\n", "<br>")}, "options": {"allowDuplicate": False, "duplicateScope": "deck", "duplicateScopeOptions": {"deckName": deckInfo[0], "checkChildren": True, "checkAllModels": True}}, "tags": ["Kindle2Anki", "Manga"], "picture": [{"filename": "{} - {}.{}".format(book, pageNumber, extension), "data": base64.b64encode(page.read()).decode('utf-8'), "fields": [deckInfo[7]]}]}}}
-        else:
-            return {"action": "addNote", "version": 6, "params": {"note":{"deckName": deckInfo[0], "modelName": deckInfo[1], "fields": {deckInfo[2]: term, deckInfo[3]: reading, deckInfo[4]: defs.replace("\n", "<br>"), deckInfo[7]: book}, "options": {"allowDuplicate": False, "duplicateScope": "deck", "duplicateScopeOptions": {"deckName": deckInfo[0], "checkChildren": True, "checkAllModels": True}}, "tags": ["Kindle2Anki", "Manga"], "picture": [{"filename": "{} - {}.{}".format(book, pageNumber, extension), "data": base64.b64encode(page.read()).decode('utf-8'), "fields": [deckInfo[8]]}]}}}
+        print(" Warning!    No audio avaiable: ", args["term"])
+    if "frequency" in args:
+        card["params"]["note"]["fields"][config["freqField"]] = args["frequency"]
+    if "bookName" in args:
+        card["params"]["note"]["fields"][config["bookField"]] = args["bookName"]
+    return card
 
 def invoke(params, term="error"):
     global cntCards
@@ -224,6 +228,7 @@ def lookup(term, exact=0, dictN=0):
 entriesPage = {}
 entries = {}
 addedEntries = {}
+booksTmp = []
 books = []
 while True:
     try:
@@ -233,11 +238,11 @@ while True:
                 if line.strip() == "==========":
                     if re.search("MKR2PDF", tmp[0]) is not None:
                         if re.search("メモ|note|nota", tmp[1], flags=re.IGNORECASE) is not None:
-                            if tmp[0].strip() not in books:
+                            if tmp[0].strip() not in booksTmp:
                                 entries[tmp[0].strip()] = []
                                 entriesPage[tmp[0].strip()] = {}
                                 addedEntries[tmp[0].strip()] = []
-                                books.append(tmp[0].strip())
+                                booksTmp.append(tmp[0].strip())
                             if tmp[3].strip() not in history and lookup(tmp[3].strip(), -1):
                                 entries[tmp[0].strip()].append(tmp[3].strip())
                                 line1 = []
@@ -254,6 +259,10 @@ while True:
     except:
         print(" Fail loading My Clippings.txt\n File not found, please copy it from documents/My Clippings.txt to Memo2Anki's root directory!")
         tmp = input(" Enter any key to try again:\n")
+        
+for b in range(len(booksTmp)):
+    if len(entries[booksTmp[b]]) != 0:
+        books.append(booksTmp[b])
 
 print("\n Words:\t\tTotal number of words from that book on Kindle's My Clippings.txt\n Avaiable:\tTotal amount of those words not yet processed by this script\n")
 print("\n | ID\t| WORDS\t\t| AVAIABLE\t| BOOK NAME")
@@ -276,14 +285,21 @@ for t in range(len(entries[books[bookName]])):
         if cntCards < numCards:
             subFreq = True
             if len(freqlists) > 0:
-                subFreq = False
+                if freqMax == 0:
+                    subFreq = True
+                else:
+                    subFreq = False
+                freqs = []
                 for q in range(len(freqlists)):
                     try:
                         tmpTerm = float(freqlists[q][entries[books[bookName]][t]])
-                        if tmpTerm <= freqMax:
+                        if tmpTerm <= freqMax or subFreq == True:
                             subFreq = True
+                            freqs.append(tmpTerm)
                     except KeyError:
                         continue
+            if len(freqs) == 0:
+                        freqs.append(123456789)
             if subFreq:
                 dictEntries = []
                 for u in range(config["dictNum"]):
@@ -321,21 +337,21 @@ for t in range(len(entries[books[bookName]])):
                     pil_image = pdfPage.render_topil()
                     pil_image.save("tmp.jpg")
                     with open('tmp.jpg', 'rb') as page:
-                        if config["bookName"] == 0:
-                            card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, "jpg")
-                            invoke(card, dictEntries[0][0])
-                            history.append(entries[books[bookName]][t])
-                        else:
-                            card = newCard([config["deckName"], config["cardType"], config["termField"], config["readField"], config["dictField"], " ", config["audioField"], config["bookField"], config["picField"]], dictEntries[0][0], furigana, definition, entriesPage[books[bookName]][entries[books[bookName]][t]], page, "jpg", books[bookName].replace(" - MKR2PDF", ""))
-                            invoke(card, dictEntries[0][0])
-                            history.append(entries[books[bookName]][t])
+                        args = {"term": dictEntries[0][0], "reading": furigana, "definition": definition, "pageNumber": entriesPage[books[bookName]][entries[books[bookName]][t]], "page": page}
+                        if config["bookName"] != 0:
+                            args["bookName"] = books[bookName].replace(" - MKR2PDF", "")
+                        if "freqField" in config and config["freqField"] != 0:
+                            args["frequency"] = str(int(min(freqs))).replace("123456789", "")
+                        card = newCard(config, args)
+                        invoke(card, dictEntries[0][0])
+                        history.append(entries[books[bookName]][t])
                     pdfPage.close()
                     pdf.close()
             else:
                 print(" Fail!    Frequency rank > {} or no frequency avaiable: {}".format(freqMax, entries[books[bookName]][t]))
-    except:
+    except Exception as e:
         historyError.append(entries[books[bookName]][t])
-        print(" Fail!")
+        print(" Fail!   ", e)
 
 with open("app_files/added.json", "w", encoding="utf-8") as file:
     json.dump(history, file, ensure_ascii=False)
