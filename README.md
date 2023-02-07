@@ -1,7 +1,7 @@
 # Memo2Anki
 Mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pdf)
 <p align="center">
-  <img src="Memo2Anki-card.JPG">
+  <img src="Memo2Anki-card.png">
 </p>
 
 ### To use Memo2Anki please make your sure your Kindle's language is set to either Brazilian Portuguese, English or Japanese
