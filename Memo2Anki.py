@@ -14,7 +14,7 @@ you can contact me on discord Kartoffel#7357 and I'll try to fix it
 no guarantees tho
 """
 
-TKZR = dictionary.Dictionary(dict_type="full").create()
+TKZR = dictionary.Dictionary(dict="full").create()
 cntCards = 0
 
 def loadJson(filename, default):
