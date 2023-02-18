@@ -7,11 +7,10 @@ import urllib.request
 import re
 import base64
 import pypdfium2 as pdfium
+import shutil
 
 """
-If you run into any problems while trying to use this script 
-you can contact me on discord Kartoffel#7357 and I'll try to fix it
-no guarantees tho
+discord Kartoffel#7357 
 """
 
 TKZR = dictionary.Dictionary(dict="full").create()
@@ -23,10 +22,14 @@ def loadJson(filename, default):
     except:
         return default
 
+def dumpJson(filename, var):
+    with open(f"app_files/{filename}", "w+", encoding="utf-8") as file:
+        json.dump(var, file, ensure_ascii=False)
+
 try:
     jpod = json.load(open("app_files/jpodFiles.json", encoding="utf-8"))
 except:
-    print(" Japanesepod's avaiable audio database not found!\n Please download it from Kindle2Anki's github repository!")
+    print(" Japanesepod's avaiable audio database not found!\n Please download it from Memo2Anki's github repository!")
     jpod = []
 
 try:
@@ -34,7 +37,7 @@ try:
 except:
     freqMain = {}
 
-config = loadJson("app_files/config", {"first_run":1})
+config = loadJson("app_files/config", {"first_run":1, "dict_Names": []})
 dicts = loadJson("app_files/dicts", [])
 freqlists = loadJson("app_files/freqLists", [])
 history = loadJson("app_files/added", [])
@@ -77,6 +80,25 @@ def add_freqList(freqN):
                     freqlist[j[0]] = j[2]
     return freqlist
 
+def checkConfig(configDict):
+    queries = [
+        ["deckName", lambda : input("\n Please inform the name of the deck(!!!case sensitive!!!) where you want the cards to be added:\n ")], 
+        ["cardType", lambda : input("\n Please inform the Note Type(!!!case sensitive!!!) you want to use as template for the added cards:\n ")],
+        ["termField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Word' to be, make sure it is the first field of the Note Type you've chosen:\n ")],
+        ["readField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Reading' to be:\n ")],
+        ["dictField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Definitions' to be:\n ")],
+        ["picField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Manga Page' to be:\n ")],
+        ["audioField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Audio' to be:\n ")],
+        ["freqField", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Word Frequency' to be, or enter 0 if you don't want it on your cards:\n ")],
+        ["bookName", lambda : input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Book Name' to be\n Enter 0 if you don't want to add the book name to your cards:\n ")],
+        ["bookField", lambda : configDict["bookName"] if configDict["bookName"] != 0 else None],
+        ["scope", lambda : "deck" if int(input("\n Please inform where do you want the script to check for duplicates,\n enter 0 to check for them only on the deck you specified or 1 to check for them on your whole collection:\n ")) == 0 else "collection"]
+    ]
+    for i in queries:
+        if i[0] not in configDict:
+            configDict[i[0]] = i[1]()
+    return configDict
+
 print(" Memo2Anki - https://github.com/Kartoffel0/Memo2Anki")
 if config["first_run"] == 1:
     print("\n This will only be asked once,\n on the next run you'll not have to inform everything again.")
@@ -89,6 +111,7 @@ if config["first_run"] == 1:
         dict = add_dict(i)
         config("dict_Names").append(dict[0])
         dicts.append(dict[1])
+        shutil.rmtree("app_files/{}".format(i), ignore_errors=True)
     freqNum = int(input("\n This script don't support multi frequency per word frequency lists,\n make sure the frequency list you'll add has only one frequency per word\n\n Please inform how many frequency lists you want to add,\n enter 0 if you don't want to add one:\n "))
     if freqNum > 0:
         for j in range(freqNum):
@@ -99,30 +122,12 @@ if config["first_run"] == 1:
         config["freqMax"] = freqMax
         freqField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Word Frequency' to be, or enter 0 if you don't want it on your cards:\n")
         config["freqField"] = freqField
+        shutil.rmtree("app_files/freq", ignore_errors=True)
     if freqNum == 0:
         config["freqMax"] = 0
         config["freqField"] = 0
+    config = checkConfig(config)
     config["first_run"] = 0
-    deck = input("\n Please inform the name of the deck(!!!case sensitive!!!) where you want the cards to be added:\n ")
-    config["deckName"] = deck
-    cardType = input("\n Please inform the Note Type(!!!case sensitive!!!) you want to use as template for the added cards:\n ")
-    config["cardType"] = cardType
-    termField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Word' to be:\n ")
-    config["termField"] = termField
-    readField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Reading' to be:\n ")
-    config["readField"] = readField
-    pictureField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Page' to be:\n ")
-    config["picField"] = pictureField
-    dictField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Definitions' to be:\n ")
-    config["dictField"] = dictField
-    audioField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Audio' to be:\n ")
-    config["audioField"] = audioField
-    nameField = input("\n Please inform the field name(!!!case sensitive!!!) where you want the 'Book Name' to be\n Enter 0 if you don't want to add the book name to your cards:\n ")
-    if nameField != 0:
-        config["bookName"] = 1
-        config["bookField"] = nameField
-    checkScope = int(input("\n Please inform where do you want the script to check for duplicates,\n enter 0 to check for them only on the deck you specified or 1 to check for them on your whole collection:\n "))
-    config["scope"] = "deck" if checkScope == 0 else "collection"
     names = []
     for i in range(len(config["dict_Names"])):
         if config["dict_Names"][i] in names:
@@ -133,13 +138,13 @@ if config["first_run"] == 1:
     config["dict_Names"] = names
     dict_name = config["dict_Names"]
 
-    with open("app_files/config.json", "w", encoding="utf-8") as file:
-        json.dump(config, file, ensure_ascii=False)
-    with open("app_files/dicts.json", "w", encoding="utf-8") as file:
-        json.dump(dicts, file, ensure_ascii=False)
-    with open("app_files/freqLists.json", "w", encoding="utf-8") as file:
-        json.dump(freqlists, file, ensure_ascii=False)
+    dumpJson("config.json", config)
+    dumpJson("dicts.json", dicts)
+    dumpJson("freqLists.json", freqlists)
     print("\n Done!\n")
+
+config = checkConfig(config)
+dumpJson("config.json", config)
 
 dict_name = config["dict_Names"]
 freqMax = config["freqMax"]
@@ -195,12 +200,11 @@ def deconjug(term, mode=0):
         
 def lookup(term, exact=0, dictN=0):
     if dictN == -1:
-        hasEntry = []
         for d in range(config["dictNum"]):
             tmpLp = lookup(term, 0, d)
-            if lookup is not None:
-                hasEntry.append(tmpLp)
-        return len(hasEntry) > 0
+            if tmpLp is not None:
+                return True
+        return False
     else:
         if exact == 1:
             try:
@@ -257,7 +261,7 @@ while True:
                     tmp.append(line)
             break
     except:
-        print(" Fail loading My Clippings.txt\n File not found, please copy it from documents/My Clippings.txt to Memo2Anki's root directory!")
+        print(" Failed to load My Clippings.txt\n File not found, please copy it from documents/My Clippings.txt to Memo2Anki's root directory!")
         tmp = input(" Enter any key to try again:\n")
         
 for b in range(len(booksTmp)):
@@ -278,7 +282,7 @@ while True:
         pdf.close()
         break
     except:
-        print(f" Fail loading {books[bookName]}.pdf!\n File not found, please copy it to Memo2Anki's root directory!")
+        print(f" Failed to load {books[bookName]}.pdf!\n File not found, please copy it to Memo2Anki's root directory!")
         tmp = input(" Enter any key to try again:\n")
 for t in range(len(entries[books[bookName]])):
     try:
@@ -335,8 +339,8 @@ for t in range(len(entries[books[bookName]])):
                     pdf = pdfium.PdfDocument(f"{books[bookName]}.pdf")
                     pdfPage = pdf.get_page((int(entriesPage[books[bookName]][entries[books[bookName]][t]]) - 1))
                     pil_image = pdfPage.render_topil()
-                    pil_image.save("tmp.jpg")
-                    with open('tmp.jpg', 'rb') as page:
+                    pil_image.save("app_files/tmp.jpg")
+                    with open('app_files/tmp.jpg', 'rb') as page:
                         args = {"term": dictEntries[0][0], "reading": furigana, "definition": definition, "pageNumber": entriesPage[books[bookName]][entries[books[bookName]][t]], "page": page}
                         if config["bookName"] != 0:
                             args["bookName"] = books[bookName].replace(" - MKR2PDF", "")
@@ -353,9 +357,7 @@ for t in range(len(entries[books[bookName]])):
         historyError.append(entries[books[bookName]][t])
         print(" Fail!   ", e)
 
-with open("app_files/added.json", "w", encoding="utf-8") as file:
-    json.dump(history, file, ensure_ascii=False)
-with open("app_files/errorHistory.json", "w", encoding="utf-8") as file:
-    json.dump(historyError, file, ensure_ascii=False)
+dumpJson("added.json", history)
+dumpJson("errorHistory.json", historyError)
 
 endVar = input(" Added cards: {}\n\n Enter 'OK' to close the script:\n ".format(cntCards))
