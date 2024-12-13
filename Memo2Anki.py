@@ -288,12 +288,12 @@ for t in range(len(entries[books[bookName]])):
     try:
         if cntCards < numCards:
             subFreq = True
+            freqs = []
             if len(freqlists) > 0:
                 if freqMax == 0:
                     subFreq = True
                 else:
                     subFreq = False
-                freqs = []
                 for q in range(len(freqlists)):
                     try:
                         tmpTerm = float(freqlists[q][entries[books[bookName]][t]])
