@@ -15,7 +15,7 @@ Mine from pdfs created with [Mokuro2Pdf](https://github.com/Kartoffel0/Mokuro2Pd
 - Install SudachiPy
 `pip install sudachipy sudachidict_full`
 - Install Pypdfium2
-`pip install --no-build-isolation -U pypdfium2`
+`pip install pypdfium2==3.21.0`
 - Install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) if you don't have it already installed
 - Clone this repository
 
